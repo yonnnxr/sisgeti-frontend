@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoMaps Pro</title>
+    
+    <!-- Estilos externos -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.2/css/all.min.css">
+    
+    <!-- Estilos da aplicação -->
+    <link rel="stylesheet" href="/assets/css/main.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>GeoMaps Pro</h1>
+                <button id="newMap" class="btn-primary">
+                    <i class="fas fa-plus"></i> Novo Mapa
+                </button>
+            </div>
+            
+            <!-- Painel de Mapas -->
+            <section class="maps-panel">
+                <h2>Meus Mapas</h2>
+                <div id="mapsList" class="list-container"></div>
+            </section>
+
+            <!-- Painel de Camadas -->
+            <section class="layers-panel">
+                <h2>Camadas</h2>
+                <div id="layersList" class="list-container"></div>
+            </section>
+
+            <!-- Painel de APIs -->
+            <section class="apis-panel">
+                <h2>Minhas APIs</h2>
+                <button id="manageApis" class="btn-secondary">
+                    <i class="fas fa-cog"></i> Gerenciar APIs
+                </button>
+                <div id="apisList" class="list-container"></div>
+            </section>
+
+            <!-- Controles de Visualização -->
+            <section class="view-controls">
+                <h2>Visualização</h2>
+                <div class="control-group">
+                    <label class="control-item">
+                        <input type="checkbox" id="weatherLayer" checked>
+                        Clima
+                    </label>
+                    <label class="control-item">
+                        <input type="checkbox" id="placesLayer" checked>
+                        Locais
+                    </label>
+                    <label class="control-item">
+                        <input type="checkbox" id="elevationLayer" checked>
+                        Elevação
+                    </label>
+                </div>
+            </section>
+        </aside>
+
+        <!-- Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Barra de Ferramentas -->
+            <div class="toolbar">
+                <div class="tool-group">
+                    <button id="markerTool" class="tool-button" title="Adicionar Marcador">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                    <button id="polylineTool" class="tool-button" title="Desenhar Linha">
+                        <i class="fas fa-draw-polygon"></i>
+                    </button>
+                    <button id="polygonTool" class="tool-button" title="Desenhar Área">
+                        <i class="fas fa-vector-square"></i>
+                    </button>
+                    <button id="circleTool" class="tool-button" title="Desenhar Círculo">
+                        <i class="fas fa-circle"></i>
+                    </button>
+                </div>
+
+                <div class="tool-group">
+                    <button id="getLocation" class="tool-button" title="Minha Localização">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                    <button id="shareMap" class="tool-button" title="Compartilhar">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    <button id="saveMap" class="tool-button" title="Salvar">
+                        <i class="fas fa-save"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Container do Mapa -->
+            <div id="map"></div>
+
+            <!-- Painel de Propriedades -->
+            <div id="propertyPanel" class="property-panel">
+                <div class="panel-header">
+                    <h3>Propriedades</h3>
+                    <button class="close-button" id="closeProperties">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="propertyForm">
+                    <div class="form-group">
+                        <label for="layerName">Nome:</label>
+                        <input type="text" id="layerName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="layerDescription">Descrição:</label>
+                        <textarea id="layerDescription" name="description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="layerStyle">Estilo:</label>
+                        <select id="layerStyle" name="style">
+                            <option value="default">Padrão</option>
+                            <option value="highlight">Destaque</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                    </div>
+                    <div id="customStyleOptions" class="form-group hidden">
+                        <label for="layerColor">Cor:</label>
+                        <input type="color" id="layerColor" name="color">
+                        
+                        <label for="layerOpacity">Opacidade:</label>
+                        <input type="range" id="layerOpacity" name="opacity" min="0" max="1" step="0.1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Aplicar</button>
+                        <button type="button" class="btn-secondary" id="resetProperties">Redefinir</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Modais -->
+        <div id="newMapModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Novo Mapa</h2>
+                    <button class="close-button" onclick="closeModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="newMapForm">
+                    <div class="form-group">
+                        <label for="mapName">Nome do Mapa:</label>
+                        <input type="text" id="mapName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="mapDescription">Descrição:</label>
+                        <textarea id="mapDescription"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                        <button type="submit" class="btn-primary">Criar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de Gerenciamento de APIs -->
+        <div id="apisModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Gerenciar APIs</h2>
+                    <button class="close-button" onclick="closeApisModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <button id="addApi" class="btn-primary">
+                        <i class="fas fa-plus"></i> Adicionar Nova API
+                    </button>
+                    
+                    <div id="apisList" class="apis-list">
+                        <!-- APIs serão listadas aqui dinamicamente -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Adicionar/Editar API -->
+        <div id="apiFormModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="apiFormTitle">Nova API</h2>
+                    <button class="close-button" onclick="closeApiFormModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <form id="apiForm">
+                    <div class="form-group">
+                        <label for="apiName">Nome da API:</label>
+                        <input type="text" id="apiName" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apiUrl">URL Base:</label>
+                        <input type="url" id="apiUrl" name="baseUrl" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apiKey">Chave da API:</label>
+                        <input type="password" id="apiKey" name="apiKey">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiType">Tipo:</label>
+                        <select id="apiType" name="type" required>
+                            <option value="weather">Clima</option>
+                            <option value="places">Locais</option>
+                            <option value="elevation">Elevação</option>
+                            <option value="custom">Personalizada</option>
+                        </select>
+                    </div>
+                    <div id="customEndpoints" class="form-group hidden">
+                        <label>Endpoints Personalizados:</label>
+                        <div class="endpoints-list">
+                            <!-- Endpoints serão adicionados aqui -->
+                        </div>
+                        <button type="button" id="addEndpoint" class="btn-secondary">
+                            <i class="fas fa-plus"></i> Adicionar Endpoint
+                        </button>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" onclick="closeApiFormModal()">Cancelar</button>
+                        <button type="submit" class="btn-primary">Salvar</button>
+                        <button type="button" id="testApi" class="btn-secondary">Testar API</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts externos -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+    <!-- Scripts da aplicação -->
+    <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html> 
